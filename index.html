@@ -15,7 +15,7 @@ body{background:var(--bg);color:var(--tx);font:16px/1.6 "IBM Plex Sans Arabic",s
 header{background:var(--hd);color:#f3ead2;padding:18px 16px 14px;text-align:center;border-radius:0 0 28px 28px}
 .wm{font:700 46px/1.4 "IBM Plex Sans Arabic",system-ui,sans-serif;color:#e8bd5f;margin:0}
 .orn{display:block;margin:2px auto 4px}
-header small{opacity:.8}
+header small{color:#f3ead2;opacity:.8}
 .bar{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:14px;margin-top:10px}
 main{padding:14px;max-width:640px;margin:auto}
 .c{background:var(--sf);border:1px solid var(--bd);border-radius:14px;padding:14px;margin-bottom:12px}
@@ -24,9 +24,14 @@ h2,h3{margin:0 0 6px}
 small{color:var(--mu)}
 .row{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0}
 .g{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:10px 0}
 .b{font:inherit;background:transparent;color:var(--tx);border:1.5px solid var(--bd);border-radius:999px;padding:8px 14px;cursor:pointer}
-.b:focus-visible,nav button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid var(--gd);outline-offset:2px}
+header .b{color:#f3ead2;border-color:#4d7a70;padding:4px 12px;font-size:14px}
+.b:focus-visible,nav button:focus-visible,input:focus-visible,select:focus-visible,.o:focus-visible{outline:3px solid var(--gd);outline-offset:2px}
 .b.sel{background:var(--hd);color:#f3ead2;border-color:var(--hd)}
+.o{font:inherit;display:flex;flex-direction:column;align-items:center;background:transparent;color:var(--tx);border:1.5px solid var(--bd);border-radius:14px;padding:8px 4px;cursor:pointer}
+.o span{font-size:30px;line-height:1.3}.o small{font-size:12px}
+.o.sel{border-color:var(--gd);background:var(--bg);box-shadow:inset 0 0 0 1px var(--gd)}
 .k{flex:1;text-align:center;border:1px solid var(--bd);border-radius:10px;padding:6px;font:700 22px/1.2 "IBM Plex Sans Arabic",system-ui,sans-serif}
 .k i{display:block;font:400 13px "IBM Plex Sans Arabic",system-ui,sans-serif;color:var(--mu);font-style:normal}
 .li{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:7px 0;border-top:1px solid var(--bd)}
@@ -38,92 +43,138 @@ nav{position:fixed;bottom:0;left:0;right:0;display:flex;background:var(--sf);bor
 nav button{flex:1;font:inherit;font-size:14px;background:none;border:0;color:var(--mu);padding:14px 2px}
 nav button.on{color:var(--gd);font-weight:700;box-shadow:inset 0 3px 0 var(--gd)}
 .tot{font:700 20px "IBM Plex Sans Arabic",system-ui,sans-serif;color:var(--gd)}
-.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:10px 0}
-.o{font:inherit;display:flex;flex-direction:column;align-items:center;background:transparent;color:var(--tx);border:1.5px solid var(--bd);border-radius:14px;padding:8px 4px;cursor:pointer}
-.o span{font-size:30px;line-height:1.3}.o small{font-size:12px}
-.o.sel{border-color:var(--gd);background:var(--bg);box-shadow:inset 0 0 0 1px var(--gd)}
-.o:focus-visible{outline:3px solid var(--gd);outline-offset:2px}
 </style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
 <div id="app"></div>
 <script>
-const M=["عبدالعزيز بن فهد","محمد بن فهد","عبدالله بن محمد","ناصر بن صالح","عبدالرحمن بن فهد","ريان بن صالح","هشام بن ابراهيم","عبداللطيف بن محمد","محمد بن صالح","فيصل بن احمد","الوليد بن محسن","فارس بن فهد","عبدالله بن احمد","نايف بن خالد"];
-const ADM=["محمد بن فهد"];
-const HASH="c8b28bb79d626fc0c0ca0df542b95d9f6299c3ddb5f43b24110a39f9d9b49958";
-async function sha(s){const b=await crypto.subtle.digest("SHA-256",new TextEncoder().encode(s));return[...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,"0")).join("")}
+const sb=supabase.createClient("https://sgaoylbnuhdcfekoxnoe.supabase.co","sb_publishable_mKVwtkeXlM0hnDu9MN19mA_0bWhw92z");
+const T=["members","meetups","rsvps","dish_options","dinner_votes","orders","shopping","ideas","idea_votes","kashta_join","kashta_cars","kashta_gear","kashta_costs","qatta_paid","qatta_expenses"];
 const CATS=["ملازيم قهوة وشاي","منظفات","بهانيس","مياه","صيانة بسيطة","أخرى"];
-const D0={me:"",admin:false,rsvp:{},why:{},tv:{cook:[],rest:[]},co:[{t:"كبسة",i:"🍛",v:[]},{t:"مكرونة",i:"🍝",v:[]},{t:"مرقوق",i:"🥘",v:[]}],ro:[{t:"برجر",i:"🍔",v:[]},{t:"مشاوي",i:"🍖",v:[]},{t:"بروستد",i:"🍗",v:[]},{t:"بيتزا",i:"🍕",v:[]}],cook:"",shop:[],orders:{},join:{},gear:[["خيمة كبيرة",""],["حطب وفحم",""],["دلة وشاي وقهوة",""],["ماء وثلج",""],["سفرة وفرش",""]],cars:{},kc:[],paid:{},ex:[],ideas:[{t:"بطولة بلوت بين فريقين",v:[]},{t:"كشتة ليلة الجمعة القادمة",v:[]}],tab:0,pend:"",ok:false,bad:0};
-let S;try{S=Object.assign({},D0,JSON.parse(localStorage.getItem("dw2")||"{}"))}catch(e){S=D0}
-const save=()=>{try{localStorage.setItem("dw2",JSON.stringify(S))}catch(e){}};
-if(!ADM.includes(S.me)||!S.ok)S.admin=false;S.pend="";
-const E=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
-const N=x=>Number(x)||0,V=id=>document.getElementById(id).value.trim();
-const att=()=>M.filter(m=>S.rsvp[m]=="y");
-const lead=()=>{const c=S.tv.cook.length,r=S.tv.rest.length;return c>r?"cook":r>c?"rest":""};
-const vb=(a,v,i,t,c,on)=>`<button class="o${on?" sel":""}" data-a="${a}" data-v="${v}"><span>${i}</span>${t}<small>${c} صوت</small></button>`;
+const REASONS=["سفر","عمل","ظرف عائلي","مرض","أخرى"];
+const GEAR=["خيمة كبيرة","حطب وفحم","دلة وشاي وقهوة","ماء وثلج","سفرة وفرش"];
+const FEE=30;
+let U=null,ME=null,D={},tab=0,msg="",mode="in",ready=false,booting=true,pend=false,rt=null,tm;
+const $a=document.getElementById("app");
+const E=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const N=x=>Number(x)||0,V=id=>document.getElementById(id).value.trim(),P=()=>document.getElementById("pw").value;
+const w=async p=>{const{error}=await p;if(error)throw error};
 const btn=(a,v,t,on)=>`<button class="b${on?" sel":""}" data-a="${a}" data-v="${E(v)}">${t}</button>`;
-const mem=()=>`<option value="">اختر</option>`+M.map(m=>`<option${S.cook==m?" selected":""}>${m}</option>`).join("");
-const hdr=()=>`<header><h1 class="wm">الديوانية</h1><svg class="orn" width="150" height="14" viewBox="0 0 150 14"><path d="M0 7h62M88 7h62" stroke="#e8bd5f" stroke-width="1.5"/><path d="M75 1l6 6-6 6-6-6z" fill="#e8bd5f"/></svg><small>مجلس الشباب، كل أسبوع</small>${S.me?`<div class="bar"><span>${S.me}</span>${S.ok&&ADM.includes(S.me)?btn("adm","","وضع المشرف: "+(S.admin?"تشغيل":"إيقاف"),S.admin):""}${btn("out","","تغيير الاسم")}</div>`:""}</header>`;
+const vb=(a,v,i,t,c,on)=>`<button class="o${on?" sel":""}" data-a="${a}" data-v="${E(v)}"><span>${i}</span>${t}<small>${c} صوت</small></button>`;
+const mname=id=>E(D.members.find(m=>m.id==id)?.name||"");
+const mt=k=>D.meetups.filter(m=>m.kind==k&&new Date(m.starts_at)>Date.now()-18*36e5).sort((a,b)=>new Date(a.starts_at)-new Date(b.starts_at))[0];
+const fd=s=>new Date(s).toLocaleString("ar-SA-u-ca-gregory-nu-latn",{weekday:"long",day:"numeric",month:"long",hour:"numeric",minute:"2-digit"});
+const nf=()=>{const d=new Date(),p=n=>String(n).padStart(2,"0");d.setDate(d.getDate()+(5-d.getDay()+7)%7);return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}T20:30`};
+const MO=()=>new Date().toISOString().slice(0,7);
+const ML=()=>new Date().toLocaleDateString("ar-SA-u-ca-gregory-nu-latn",{month:"long",year:"numeric"});
+const lead=m=>{const v=D.dinner_votes.filter(x=>x.meetup_id==m.id&&x.vote_type=="type"),c=v.filter(x=>x.choice=="cook").length,r=v.length-c;return c>r?"cook":r>c?"rest":""};
+const MSG={"bad code":"كود الدعوة غير صحيح","name taken":"هذا الاسم مرتبط بحساب آخر","already linked":"حسابك مرتبط باسم بالفعل","Invalid login credentials":"البريد أو كلمة المرور غير صحيحة","User already registered":"هذا البريد مسجل، اضغط (عندي حساب)"};
+const emsg=m=>MSG[m]||(/duplicate key/.test(m)?"موجود مسبقًا":m);
+const em=()=>msg?`<p class="n">${E(msg)}</p>`:"";
 
-function home(){
-const y=att().length,n=M.filter(m=>S.rsvp[m]=="n").length,my=S.rsvp[S.me]||"";
-return `<div class="c"><small>اللقاء القادم (بيانات تجريبية)</small><h2>الجمعة ٢٧ نوفمبر، ٨:٣٠ م</h2><p class="mu">الاستراحة، والعشاء: ${lead()=="cook"?"طبخ":lead()=="rest"?"مطعم":"بالتصويت"}</p>
-<div class="row"><span class="k">${y}<i>جاي</i></span><span class="k">${n}<i>معتذر</i></span><span class="k">${14-y-n}<i>ما ردّ</i></span></div>
-<b>ردّك</b><div class="row">${btn("rsvp","y","جاي",my=="y")}${btn("rsvp","n","معتذر",my=="n")}${btn("rsvp","","لاحقًا",!my)}</div>
-${my=="n"?`<small>سبب الاعتذار</small><div class="row">${["سفر","عمل","ظرف عائلي","مرض","أخرى"].map(w=>btn("why",w,w,S.why[S.me]==w)).join("")}</div>`:""}</div>
-<div class="c"><h3>الحضور</h3>${M.map(m=>{const s=S.rsvp[m];return `<div class="li"><span>${m}</span>${s=="y"?'<span class="y">جاي</span>':s=="n"?`<span class="n">معتذر${S.why[m]?" ("+E(S.why[m])+")":""}</span>`:'<small>ما ردّ</small>'}</div>`}).join("")}</div>`}
+const hdr=()=>`<header><h1 class="wm">الديوانية</h1><svg class="orn" width="150" height="14" viewBox="0 0 150 14"><path d="M0 7h62M88 7h62" stroke="#e8bd5f" stroke-width="1.5"/><path d="M75 1l6 6-6 6-6-6z" fill="#e8bd5f"/></svg><small>مجلس الشباب، كل أسبوع</small>${U?`<div class="bar"><span>${ME?E(ME.name)+(ME.is_admin?" (مشرف)":""):E(U.email)}</span>${btn("out","","خروج")}</div>`:""}</header>`;
+const authV=()=>{const up=mode=="up";return `<main><div class="c"><h2>${up?"حساب جديد":"دخول"}</h2>${em()}<div class="f" style="flex-direction:column"><input id="em" type="email" autocomplete="email" placeholder="البريد الإلكتروني" dir="ltr"><input id="pw" type="password" autocomplete="${up?"new-password":"current-password"}" placeholder="كلمة المرور (٨ أحرف أو أكثر)" dir="ltr"></div><div class="row">${btn(up?"signup":"signin","",up?"إنشاء الحساب":"دخول",true)}${btn("mode",up?"in":"up",up?"عندي حساب":"حساب جديد")}</div></div></main>`};
+const claimV=()=>`<main><div class="c"><h2>اربط حسابك باسمك</h2><p class="mu">اختر اسمك، وأدخل كود الدعوة اللي أرسله لك المشرف.</p>${em()}<div class="f"><select id="cm" style="flex:1"><option value="">اختر اسمك</option>${D.members.filter(m=>!m.user_id).map(m=>`<option value="${m.id}">${E(m.name)}</option>`).join("")}</select></div><div class="f"><input id="cc" placeholder="كود الدعوة" dir="ltr"><button class="b sel" data-a="claim">ربط</button></div></div></main>`;
+const mkForm=k=>ME.is_admin?`<div class="c"><h3>${k=="kashta"?"إضافة كشتة":"إضافة لقاء"}</h3><div class="f"><input id="md" type="datetime-local" value="${nf()}"></div><div class="f"><input id="mp" value="${k=="kashta"?"":"الاستراحة"}" placeholder="المكان"><button class="b sel" data-a="mk" data-v="${k}">إنشاء</button></div></div>`:`<div class="c"><p class="mu">ما فيه ${k=="kashta"?"كشتة":"لقاء"} قادم. المشرف يضيفه.</p></div>`;
 
-function dinner(){
-const L=lead(),y=att().length;
-let h=`<div class="c"><h3>عشاء اللقاء</h3><small>١. صوّت: طبخ أو مطعم</small><div class="g">${vb("tv","cook","🍳","طبخ",S.tv.cook.length,S.tv.cook.includes(S.me))}${vb("tv","rest","🛵","مطعم",S.tv.rest.length,S.tv.rest.includes(S.me))}</div></div>`;
+function home(){const m=mt("regular");if(!m)return mkForm("regular");
+const rs=D.rsvps.filter(r=>r.meetup_id==m.id),my=rs.find(r=>r.member_id==ME.id),st=my?.status||"",y=rs.filter(r=>r.status=="y").length,n=rs.filter(r=>r.status=="n").length;
+return `<div class="c"><small>اللقاء القادم</small><h2>${fd(m.starts_at)}</h2><p class="mu">${E(m.place)}</p>
+<div class="row"><span class="k">${y}<i>جاي</i></span><span class="k">${n}<i>معتذر</i></span><span class="k">${D.members.length-y-n}<i>ما ردّ</i></span></div>
+<b>ردّك</b><div class="row">${btn("rsvp","y","جاي",st=="y")}${btn("rsvp","n","معتذر",st=="n")}${btn("rsvp","","لاحقًا",!st)}</div>
+${st=="n"?`<small>سبب الاعتذار</small><div class="row">${REASONS.map(x=>btn("why",x,x,my.reason==x)).join("")}</div>`:""}
+${ME.is_admin?`<div class="row">${btn("rmm",m.id,"حذف هذا اللقاء")}</div>`:""}</div>
+<div class="c"><h3>الحضور</h3>${D.members.map(p=>{const r=rs.find(x=>x.member_id==p.id);return `<div class="li"><span>${E(p.name)}</span>${r?.status=="y"?'<span class="y">جاي</span>':r?.status=="n"?`<span class="n">معتذر${r.reason?" ("+E(r.reason)+")":""}</span>`:"<small>ما ردّ</small>"}</div>`}).join("")}</div>`}
+
+function dinner(){const m=mt("regular");if(!m)return `<div class="c"><p class="mu">ما فيه لقاء قادم بعد.</p></div>`;
+const L=lead(m),VT=D.dinner_votes.filter(v=>v.meetup_id==m.id),mine=t=>VT.find(v=>v.member_id==ME.id&&v.vote_type==t)?.choice,cn=c=>VT.filter(v=>v.vote_type=="type"&&v.choice==c).length;
+let h=`<div class="c"><h3>عشاء اللقاء</h3><small>١. صوّت: طبخ أو مطعم</small><div class="g">${vb("tv","cook","🍳","طبخ",cn("cook"),mine("type")=="cook")}${vb("tv","rest","🛵","مطعم",cn("rest"),mine("type")=="rest")}</div></div>`;
 if(!L)return h+`<div class="c"><p class="mu">ما فيه أصوات أو تعادل. صوّتوا ليتحدد النوع.</p></div>`;
-const O=S[L=="cook"?"co":"ro"],w=[...O].sort((a,b)=>b.v.length-a.v.length)[0];
-h+=`<div class="c"><small>٢. صوّت على ${L=="cook"?"الأكلة":"الوجبة"}</small><div class="g3">${O.map((o,i)=>vb("ov",i,o.i,o.t,o.v.length,o.v.includes(S.me))).join("")}</div>${w.v.length?`<p class="mu">الأعلى تصويتًا: <b>${w.i} ${w.t}</b></p>`:""}<div class="f"><input id="oi2" placeholder="اقتراح جديد"><button class="b sel" data-a="oadd">أضف اقتراح</button></div></div>`;
-if(L=="cook")return h+`<div class="c"><small>٣. الطباخ والمقاضي</small><div class="f"><select data-a="cook" style="flex:1">${mem()}</select></div>${S.shop.map(s=>`<div class="li"><span>${E(s)}</span></div>`).join("")||'<p class="mu">القائمة فاضية، أضف أول بند.</p>'}<div class="f"><input id="si" placeholder="مثال: رز بسمتي"><button class="b sel" data-a="shop">أضف بند</button></div></div>`;
-const my=S.orders[S.me]||[],sub=m=>(S.orders[m]||[]).reduce((a,x)=>a+N(x.p),0),tot=att().reduce((a,m)=>a+sub(m),0);
-h+=`<div class="c"><small>٣. سجّل طلبك</small>${S.rsvp[S.me]=="y"?`<div class="f"><input id="oi" placeholder="مثال: بروستد حراق"><input id="op" type="number" placeholder="ر.س"></div><div class="row"><button class="b sel" data-a="ord">أضف للطلب</button></div>`:`<p class="mu">سجّل حضورك "جاي" أول عشان تضيف طلبك.</p>`}${my.map((x,i)=>`<div class="li"><span>${E(x.t)}</span><span>${N(x.p)} ${btn("del",i,"حذف")}</span></div>`).join("")}</div>`;
-return h+`<div class="c"><h3>طلبات الحاضرين</h3>${att().map(m=>`<div class="li"><span><b>${m}</b><br><small>${(S.orders[m]||[]).map(x=>E(x.t)).join("، ")||"لم يطلب"}</small></span><b>${sub(m)}</b></div>`).join("")}<div class="li"><b>المجموع</b><span class="tot">${tot} ر.س</span></div><div class="li"><b>لو انقسم بالتساوي على ${y} حاضر</b><span class="tot">${y?(tot/y).toFixed(1):0} ر.س</span></div></div>`}
+const O=D.dish_options.filter(o=>o.kind==L),dc=o=>VT.filter(v=>v.vote_type=="dish"&&v.choice==String(o.id)).length,top=[...O].sort((a,b)=>dc(b)-dc(a))[0];
+h+=`<div class="c"><small>٢. صوّت على ${L=="cook"?"الأكلة":"الوجبة"}</small><div class="g3">${O.map(o=>vb("ov",o.id,o.icon,E(o.title),dc(o),mine("dish")==String(o.id))).join("")}</div>${top&&dc(top)?`<p class="mu">الأعلى تصويتًا: <b>${top.icon} ${E(top.title)}</b></p>`:""}<div class="f"><input id="oi2" placeholder="اقتراح جديد"><button class="b sel" data-a="oadd">أضف اقتراح</button></div></div>`;
+if(L=="cook"){const ck=m.cook_member,sh=D.shopping.filter(s=>s.meetup_id==m.id);
+return h+`<div class="c"><small>٣. الطباخ والمقاضي</small>${ME.is_admin?`<div class="f"><select data-a="cook" style="flex:1"><option value="">اختر الطباخ</option>${D.members.map(p=>`<option value="${p.id}"${ck==p.id?" selected":""}>${E(p.name)}</option>`).join("")}</select></div>`:`<p>الطباخ: <b>${ck?mname(ck):"لم يحدد بعد"}</b></p>`}${sh.map(s=>`<div class="li"><span>${E(s.item)}</span>${s.added_by==ME.id||ME.is_admin?btn("shopdel",s.id,"حذف"):""}</div>`).join("")||'<p class="mu">قائمة المقاضي فاضية.</p>'}<div class="f"><input id="si" placeholder="مثال: رز بسمتي"><button class="b sel" data-a="shop">أضف بند</button></div></div>`}
+const ys=D.rsvps.filter(r=>r.meetup_id==m.id&&r.status=="y").map(r=>r.member_id),OR=D.orders.filter(o=>o.meetup_id==m.id),sub=id=>OR.filter(o=>o.member_id==id).reduce((a,o)=>a+N(o.price),0),tot=ys.reduce((a,id)=>a+sub(id),0);
+h+=`<div class="c"><small>٣. سجّل طلبك</small>${ys.includes(ME.id)?`<div class="f"><input id="oi" placeholder="مثال: بروستد حراق"><input id="op" type="number" placeholder="ر.س"></div><div class="row"><button class="b sel" data-a="ord">أضف للطلب</button></div>`:'<p class="mu">سجّل حضورك "جاي" أول عشان تضيف طلبك.</p>'}${OR.filter(o=>o.member_id==ME.id).map(o=>`<div class="li"><span>${E(o.item)}</span><span>${N(o.price)} ${btn("orddel",o.id,"حذف")}</span></div>`).join("")}</div>`;
+return h+`<div class="c"><h3>طلبات الحاضرين</h3>${ys.map(id=>`<div class="li"><span><b>${mname(id)}</b><br><small>${OR.filter(o=>o.member_id==id).map(o=>E(o.item)).join("، ")||"لم يطلب"}</small></span><b>${sub(id)}</b></div>`).join("")||'<p class="mu">لا أحد سجّل حضوره.</p>'}<div class="li"><b>المجموع</b><span class="tot">${tot} ر.س</span></div><div class="li"><b>لو انقسم بالتساوي على ${ys.length} حاضر</b><span class="tot">${ys.length?(tot/ys.length).toFixed(1):0} ر.س</span></div></div>`}
 
-function kashta(){
-const j=M.filter(m=>S.join[m]),kt=S.kc.reduce((a,c)=>a+N(c[1]),0),cars=Object.keys(S.cars);
-return `<div class="c"><small>كشتة تجريبية</small><h2>طلعة ترفيهية</h2><p class="mu">المكان والتاريخ يتحددان بالتصويت. المشاركون: ${j.length}</p><div class="row">${btn("join","",S.join[S.me]?"مشارك":"أبغى أشارك",S.join[S.me])}</div></div>
-<div class="c"><h3>المعدات</h3>${S.gear.map((g,i)=>`<div class="li"><span>${g[0]}</span>${g[1]&&g[1]!=S.me?`<small>${g[1]}</small>`:btn("gear",i,g[1]?"أنا متكفل (إلغاء)":"أتكفل به",g[1]==S.me)}</div>`).join("")}</div>
-<div class="c"><h3>السيارات والمقاعد</h3><div class="f"><select data-a="car" style="flex:1">${[0,1,2,3,4,5].map(n=>`<option value="${n}"${(S.cars[S.me]||0)==n?" selected":""}>${n?"معي سيارة وفيها "+n+" مقاعد فاضية":"ما معي سيارة"}</option>`).join("")}</select></div>${cars.map(m=>`<div class="li"><span>${m}</span><b>${S.cars[m]} مقاعد</b></div>`).join("")}</div>
-<div class="c"><h3>تكاليف الكشتة</h3><small>منفصلة عن القطة، وتنقسم على المشاركين فقط</small>${S.kc.map(c=>`<div class="li"><span>${E(c[0])}</span><b>${N(c[1])}</b></div>`).join("")}<div class="f"><input id="kt" placeholder="البند"><input id="kp" type="number" placeholder="ر.س"></div><div class="row"><button class="b sel" data-a="kcadd">أضف تكلفة</button></div><div class="li"><b>نصيب كل مشارك</b><span class="tot">${j.length?(kt/j.length).toFixed(1):0} ر.س</span></div></div>`}
+function kashta(){const m=mt("kashta");if(!m)return mkForm("kashta");
+const J=D.kashta_join.filter(j=>j.meetup_id==m.id),jm=J.some(j=>j.member_id==ME.id),G=D.kashta_gear.filter(g=>g.meetup_id==m.id),CR=D.kashta_cars.filter(c=>c.meetup_id==m.id),myc=CR.find(c=>c.member_id==ME.id)?.seats||0,KC=D.kashta_costs.filter(c=>c.meetup_id==m.id),kt=KC.reduce((a,c)=>a+N(c.amount),0);
+return `<div class="c"><small>الكشتة القادمة</small><h2>${fd(m.starts_at)}</h2><p class="mu">${E(m.place)}. المشاركون: ${J.length}</p><div class="row">${btn("join","",jm?"مشارك":"أبغى أشارك",jm)}${ME.is_admin?btn("rmm",m.id,"حذف الكشتة"):""}</div><small>${J.map(j=>mname(j.member_id)).join("، ")}</small></div>
+<div class="c"><h3>المعدات</h3>${G.map(g=>`<div class="li"><span>${E(g.item)}</span>${!g.taken_by?btn("gear",g.id,"أتكفل به"):g.taken_by==ME.id?btn("gear",g.id,"أنا متكفل (إلغاء)",true):`<small>${mname(g.taken_by)}</small>`}</div>`).join("")}<div class="f"><input id="gi" placeholder="غرض جديد"><button class="b sel" data-a="gearadd">أضف</button></div></div>
+<div class="c"><h3>السيارات والمقاعد</h3><div class="f"><select data-a="car" style="flex:1">${[0,1,2,3,4,5].map(n=>`<option value="${n}"${myc==n?" selected":""}>${n?"معي سيارة وفيها "+n+" مقاعد فاضية":"ما معي سيارة"}</option>`).join("")}</select></div>${CR.map(c=>`<div class="li"><span>${mname(c.member_id)}</span><b>${c.seats} مقاعد</b></div>`).join("")}</div>
+<div class="c"><h3>تكاليف الكشتة</h3><small>منفصلة عن القطة، وتنقسم على المشاركين فقط</small>${KC.map(c=>`<div class="li"><span>${E(c.item)}</span><span>${N(c.amount)} ${c.added_by==ME.id||ME.is_admin?btn("kcdel",c.id,"حذف"):""}</span></div>`).join("")}<div class="f"><input id="kt" placeholder="البند"><input id="kp" type="number" placeholder="ر.س"></div><div class="row"><button class="b sel" data-a="kcadd">أضف تكلفة</button></div><div class="li"><b>نصيب كل مشارك</b><span class="tot">${J.length?(kt/J.length).toFixed(1):0} ر.س</span></div></div>`}
 
-function qatta(){
-const p=M.filter(m=>S.paid[m]).length,ex=S.ex.reduce((a,e)=>a+N(e[2]),0),by={};S.ex.forEach(e=>by[e[0]]=(by[e[0]]||0)+N(e[2]));
-return `<div class="c"><small>قطة نوفمبر ٢٠٢٦ لنثريات الاستراحة</small><h2>الرصيد <span class="tot">${p*30-ex} ر.س</span></h2><p class="mu">المحصّل ${p*30} من ٤٢٠، والمصروف ${ex}</p></div>
-<div class="c"><h3>من دفع ٣٠ ريال</h3>${M.map(m=>`<div class="li"><span>${m}</span>${S.admin?btn("paid",m,S.paid[m]?"دفع":"لم يدفع",S.paid[m]):S.paid[m]?'<span class="y">دفع</span>':'<span class="n">لم يدفع</span>'}</div>`).join("")}</div>
-<div class="c"><h3>المصاريف</h3>${Object.keys(by).map(k=>`<div class="li"><b>${k}</b><b>${by[k]}</b></div>`).join("")}${S.ex.map(e=>`<div class="li"><span>${e[0]}${e[1]?": "+E(e[1]):""}</span><span>${N(e[2])}</span></div>`).join("")||'<p class="mu">ما فيه مصاريف مسجلة.</p>'}
-${S.admin?`<div class="f"><select id="ec">${CATS.map(c=>`<option>${c}</option>`).join("")}</select><input id="ep" type="number" placeholder="ر.س"></div><div class="f"><input id="et" placeholder="ملاحظة (اختياري)"><button class="b sel" data-a="exadd">سجّل مصروف</button></div>`:'<small>المشرف يسجّل الدفعات والمصاريف.</small>'}</div>`}
+function qatta(){const mo=MO(),pd=D.qatta_paid.filter(p=>p.paid),pm=pd.filter(p=>p.month==mo).map(p=>p.member_id),col=pd.length*FEE,ex=D.qatta_expenses.reduce((a,e)=>a+N(e.amount),0),EX=[...D.qatta_expenses].sort((a,b)=>a.spent_on<b.spent_on?1:-1),by={};
+EX.filter(e=>e.spent_on.startsWith(mo)).forEach(e=>by[e.category]=(by[e.category]||0)+N(e.amount));
+return `<div class="c"><small>رصيد القطة (لنثريات الاستراحة)</small><h2><span class="tot">${col-ex} ر.س</span></h2><p class="mu">المحصّل ${col}، والمصروف ${ex}</p></div>
+<div class="c"><h3>قطة ${ML()}: ${FEE} ر.س</h3><small>دفع ${pm.length} من ${D.members.length}</small>${D.members.map(p=>`<div class="li"><span>${E(p.name)}</span>${ME.is_admin?btn("paid",p.id,pm.includes(p.id)?"دفع":"لم يدفع",pm.includes(p.id)):pm.includes(p.id)?'<span class="y">دفع</span>':'<span class="n">لم يدفع</span>'}</div>`).join("")}</div>
+<div class="c"><h3>المصاريف</h3>${Object.keys(by).length?"<small>هذا الشهر حسب التصنيف</small>"+Object.keys(by).map(k=>`<div class="li"><b>${k}</b><b>${by[k]}</b></div>`).join(""):""}<small style="display:block;margin-top:8px">آخر المصاريف</small>${EX.slice(0,15).map(e=>`<div class="li"><span>${E(e.category)}${e.note?": "+E(e.note):""}<br><small>${e.spent_on}</small></span><span>${N(e.amount)} ${ME.is_admin?btn("exdel",e.id,"حذف"):""}</span></div>`).join("")||'<p class="mu">ما فيه مصاريف مسجلة.</p>'}${ME.is_admin?`<div class="f"><select id="ec">${CATS.map(c=>`<option>${c}</option>`).join("")}</select><input id="ep" type="number" placeholder="ر.س"></div><div class="f"><input id="et" placeholder="ملاحظة (اختياري)"><button class="b sel" data-a="exadd">سجّل مصروف</button></div>`:"<small>المشرف يسجّل الدفعات والمصاريف.</small>"}</div>`}
 
-function ideas(){
-return `<div class="c"><h3>اقتراحاتكم</h3><small>اقترح ميزة أو فعالية وصوّت لما يعجبك</small><div class="f"><input id="ii" placeholder="اقتراحك"><button class="b sel" data-a="idea">أضف</button></div></div>`+S.ideas.map((d,i)=>`<div class="c li" style="border-top:1px solid var(--bd)"><span>${E(d.t)}</span>${btn("vote",i,"👍 "+d.v.length,d.v.includes(S.me))}</div>`).join("")}
+function ideas(){const IV=D.idea_votes,n=d=>IV.filter(v=>v.idea_id==d.id).length;
+return `<div class="c"><h3>اقتراحاتكم</h3><small>اقترح ميزة أو فعالية وصوّت لما يعجبك</small><div class="f"><input id="ii" placeholder="اقتراحك"><button class="b sel" data-a="idea">أضف</button></div></div>`+[...D.ideas].sort((a,b)=>n(b)-n(a)).map(d=>`<div class="c row" style="justify-content:space-between;align-items:center"><span>${E(d.title)}</span><span>${btn("vote",d.id,"👍 "+n(d),IV.some(v=>v.idea_id==d.id&&v.member_id==ME.id))} ${d.created_by==ME.id||ME.is_admin?btn("ideadel",d.id,"حذف"):""}</span></div>`).join("")}
 
-function R(){
-const a=document.getElementById("app");
-if(S.pend){a.innerHTML=hdr()+`<main><div class="c"><h2>${S.pend}</h2><p class="mu">هذا الاسم للمشرف. أدخل كلمة المرور.</p><div class="f"><input id="pw" type="password" autocomplete="off" placeholder="كلمة المرور"><button class="b sel" data-a="pw">دخول</button></div>${S.bad?'<p class="n">كلمة المرور غير صحيحة.</p>':""}<div class="row">${btn("back","","رجوع")}</div></div></main>`;return}
-if(!S.me){a.innerHTML=hdr()+`<main><div class="c"><h2>حياك الله</h2><p class="mu">اختر اسمك للدخول</p><div class="g">${M.map(m=>btn("me",m,m)).join("")}</div></div></main>`;return}
-a.innerHTML=hdr()+`<main>${[home,dinner,kashta,qatta,ideas][S.tab]()}</main><nav>${["اللقاء","العشاء","الكشتات","القطة","اقتراحات"].map((t,i)=>`<button data-a="tab" data-v="${i}" class="${S.tab==i?"on":""}">${t}</button>`).join("")}</nav>`}
+function R(){const a=document.activeElement;
+if(ME&&a&&a.tagName=="INPUT"&&a.type!="password"&&a.value&&a.closest("main")){pend=true;return}
+pend=false;let b;
+if(booting)b='<main><p class="mu">جارٍ التحميل...</p></main>';
+else if(!U)b=authV();
+else if(!ready)b='<main><p class="mu">جارٍ التحميل...</p></main>';
+else if(!ME)b=claimV();
+else b=`<main>${em()}${[home,dinner,kashta,qatta,ideas][tab]()}</main><nav>${["اللقاء","العشاء","الكشتات","القطة","اقتراحات"].map((t,i)=>`<button data-a="tab" data-v="${i}" class="${tab==i?"on":""}">${t}</button>`).join("")}</nav>`;
+$a.innerHTML=hdr()+b}
 
+async function load(){if(!U)return;
+const r=await Promise.all(T.map(t=>sb.from(t).select("*")));
+T.forEach((t,i)=>D[t]=r[i].data||[]);
+const er=r.find(x=>x.error);if(er)msg=emsg(er.error.message);
+ME=D.members.find(m=>m.user_id==U.id)||null;ready=true;
+if(!rt)rt=sb.channel("dw").on("postgres_changes",{event:"*",schema:"public"},()=>{clearTimeout(tm);tm=setTimeout(load,400)}).subscribe();
+R()}
+
+const tog=async(tb,match,row)=>{const{data,error}=await sb.from(tb).select("*").match(match);if(error)throw error;return data.length?w(sb.from(tb).delete().match(match)):w(sb.from(tb).insert(row))};
+const tvote=async(m,t,c)=>{const cur=D.dinner_votes.find(x=>x.meetup_id==m.id&&x.member_id==ME.id&&x.vote_type==t),k={meetup_id:m.id,member_id:ME.id,vote_type:t};
+return cur&&cur.choice==c?w(sb.from("dinner_votes").delete().match(k)):w(sb.from("dinner_votes").upsert({...k,choice:c}))};
 const A={
-me:v=>{S.bad=0;if(ADM.includes(v)){S.pend=v;return}S.me=v;S.ok=false;S.admin=false},back:()=>S.pend="",out:()=>{S.me="";S.ok=false;S.admin=false},pw:()=>{sha("diwaniya:"+V("pw")).then(h=>{if(h==HASH){S.me=S.pend;S.pend="";S.ok=true;S.admin=true;S.bad=0}else S.bad=1;save();R()})},tab:v=>S.tab=N(v),adm:()=>S.admin=!S.admin,
-rsvp:v=>{S.rsvp[S.me]=v;if(v!="n")delete S.why[S.me]},why:v=>S.why[S.me]=v,
-tv:v=>{const had=S.tv[v].includes(S.me);S.tv.cook=S.tv.cook.filter(x=>x!=S.me);S.tv.rest=S.tv.rest.filter(x=>x!=S.me);if(!had)S.tv[v].push(S.me)},
-ov:v=>{const O=S[lead()=="cook"?"co":"ro"],had=O[N(v)].v.includes(S.me);O.forEach(o=>o.v=o.v.filter(x=>x!=S.me));if(!had)O[N(v)].v.push(S.me)},
-oadd:()=>{const t=V("oi2");if(t)S[lead()=="cook"?"co":"ro"].push({t,i:"🍽️",v:[]})},
-cook:v=>S.cook=v,shop:()=>{const t=V("si");if(t)S.shop.push(t)},
-ord:()=>{const t=V("oi");if(t)(S.orders[S.me]=S.orders[S.me]||[]).push({t,p:N(V("op"))})},del:v=>S.orders[S.me].splice(N(v),1),
-join:()=>S.join[S.me]=!S.join[S.me],gear:v=>{const g=S.gear[N(v)];g[1]=g[1]?"":S.me},
-car:v=>{N(v)?S.cars[S.me]=N(v):delete S.cars[S.me]},kcadd:()=>{const t=V("kt");if(t)S.kc.push([t,N(V("kp"))])},
-paid:v=>S.paid[v]=!S.paid[v],exadd:()=>{if(N(V("ep")))S.ex.push([V("ec"),V("et"),N(V("ep"))])},
-idea:()=>{const t=V("ii");if(t)S.ideas.push({t,v:[]})},
-vote:v=>{const d=S.ideas[N(v)],k=d.v.indexOf(S.me);k<0?d.v.push(S.me):d.v.splice(k,1)}};
-function run(a,v){if(A[a]){A[a](v);save();R()}}
-document.addEventListener("click",e=>{const t=e.target.closest("button[data-a]");if(t)run(t.dataset.a,t.dataset.v)});
-document.addEventListener("change",e=>{if(e.target.tagName=="SELECT"&&e.target.dataset.a)run(e.target.dataset.a,e.target.value)});
+signin:()=>w(sb.auth.signInWithPassword({email:V("em"),password:P()})),
+signup:()=>w(sb.auth.signUp({email:V("em"),password:P()})),
+out:async()=>{await sb.removeAllChannels();rt=null;await sb.auth.signOut()},
+claim:()=>{if(!N(V("cm")))throw{message:"اختر اسمك"};return w(sb.rpc("claim_member",{p_member:N(V("cm")),p_code:V("cc")}))},
+rsvp:v=>{const m=mt("regular"),k={meetup_id:m.id,member_id:ME.id};return v?w(sb.from("rsvps").upsert({...k,status:v,reason:null})):w(sb.from("rsvps").delete().match(k))},
+why:v=>w(sb.from("rsvps").update({reason:v}).match({meetup_id:mt("regular").id,member_id:ME.id})),
+mk:async k=>{const d=V("md");if(!d)throw{message:"حدد التاريخ"};
+const{data,error}=await sb.from("meetups").insert({starts_at:new Date(d).toISOString(),place:V("mp")||(k=="kashta"?"يحدد لاحقًا":"الاستراحة"),kind:k}).select().single();if(error)throw error;
+if(k=="kashta")await w(sb.from("kashta_gear").insert(GEAR.map(item=>({meetup_id:data.id,item}))))},
+rmm:v=>confirm("حذف هذا الموعد مع كل بياناته؟")?w(sb.from("meetups").delete().eq("id",v)):0,
+tv:v=>tvote(mt("regular"),"type",v),
+ov:v=>tvote(mt("regular"),"dish",String(v)),
+oadd:()=>{const t=V("oi2");return t?w(sb.from("dish_options").insert({kind:lead(mt("regular")),title:t,icon:"🍽️",created_by:ME.id})):0},
+cook:v=>w(sb.from("meetups").update({cook_member:v?N(v):null}).eq("id",mt("regular").id)),
+shop:()=>{const t=V("si");return t?w(sb.from("shopping").insert({meetup_id:mt("regular").id,item:t,added_by:ME.id})):0},
+shopdel:v=>w(sb.from("shopping").delete().eq("id",v)),
+ord:()=>{const t=V("oi");return t?w(sb.from("orders").insert({meetup_id:mt("regular").id,member_id:ME.id,item:t,price:N(V("op"))})):0},
+orddel:v=>w(sb.from("orders").delete().eq("id",v)),
+join:()=>{const m=mt("kashta");return tog("kashta_join",{meetup_id:m.id,member_id:ME.id},{meetup_id:m.id,member_id:ME.id})},
+car:v=>{const m=mt("kashta"),k={meetup_id:m.id,member_id:ME.id};return N(v)?w(sb.from("kashta_cars").upsert({...k,seats:N(v)})):w(sb.from("kashta_cars").delete().match(k))},
+gearadd:()=>{const t=V("gi");return t?w(sb.from("kashta_gear").insert({meetup_id:mt("kashta").id,item:t})):0},
+gear:v=>{const g=D.kashta_gear.find(x=>x.id==v);return w(sb.from("kashta_gear").update({taken_by:g.taken_by?null:ME.id}).eq("id",v))},
+kcadd:()=>{const t=V("kt");return t?w(sb.from("kashta_costs").insert({meetup_id:mt("kashta").id,item:t,amount:N(V("kp")),added_by:ME.id})):0},
+kcdel:v=>w(sb.from("kashta_costs").delete().eq("id",v)),
+paid:v=>tog("qatta_paid",{month:MO(),member_id:N(v)},{month:MO(),member_id:N(v),paid:true}),
+exadd:()=>N(V("ep"))>0?w(sb.from("qatta_expenses").insert({category:V("ec"),note:V("et")||null,amount:N(V("ep"))})):0,
+exdel:v=>w(sb.from("qatta_expenses").delete().eq("id",v)),
+idea:()=>{const t=V("ii");return t?w(sb.from("ideas").insert({title:t,created_by:ME.id})):0},
+vote:v=>tog("idea_votes",{idea_id:N(v),member_id:ME.id},{idea_id:N(v),member_id:ME.id}),
+ideadel:v=>w(sb.from("ideas").delete().eq("id",v))};
+
+async function run(a,v){if(!A[a])return;msg="";try{await A[a](v)}catch(e){msg=emsg(e.message||String(e))}U&&a!="out"?await load():R()}
+document.addEventListener("click",e=>{const t=e.target.closest("button[data-a]");if(!t)return;const a=t.dataset.a,v=t.dataset.v;
+if(a=="tab"){tab=N(v);R();return}if(a=="mode"){mode=v;msg="";R();return}run(a,v)});
+document.addEventListener("change",e=>{const t=e.target;if(t.tagName=="SELECT"&&t.dataset.a)run(t.dataset.a,t.value)});
+document.addEventListener("focusout",()=>{if(pend)setTimeout(()=>{if(pend)R()},150)});
+sb.auth.onAuthStateChange((_e,s)=>{const nu=s?.user||null,ch=nu?.id!=U?.id;U=nu;booting=false;
+if(ch||!ready){ready=false;ME=null;if(U)setTimeout(load,0);else R()}});
 R();
 </script>
 </body>
