@@ -4,6 +4,18 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>الديوانية</title>
+<meta name="description" content="مجلس الشباب، كل أسبوع">
+<meta property="og:type" content="website">
+<meta property="og:title" content="الديوانية">
+<meta property="og:description" content="مجلس الشباب، كل أسبوع">
+<meta property="og:image" content="https://binmohsen14.github.io/diwaniya/preview.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#15403a">
+<meta name="apple-mobile-web-app-title" content="الديوانية">
+<link rel="icon" type="image/png" href="icon.png">
+<link rel="apple-touch-icon" href="icon.png">
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
 :root{--bg:#e8eee4;--sf:#fbfcf7;--tx:#14302b;--mu:#5f736c;--gd:#a97a22;--hd:#15403a;--gr:#23704f;--rd:#a33f2c;--bd:#cfdacb;color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
@@ -44,12 +56,14 @@ nav button{flex:1;font:inherit;font-size:14px;background:none;border:0;color:var
 nav button.on{color:var(--gd);font-weight:700;box-shadow:inset 0 3px 0 var(--gd)}
 .tot{font:700 20px "IBM Plex Sans Arabic",system-ui,sans-serif;color:var(--gd)}
 </style>
+<link rel="preconnect" href="https://fqlrrfxqiayfwtsoefbn.supabase.co" crossorigin>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
 <div id="app"></div>
 <script>
-const sb=supabase.createClient("https://sgaoylbnuhdcfekoxnoe.supabase.co","sb_publishable_mKVwtkeXlM0hnDu9MN19mA_0bWhw92z");
+const sb=supabase.createClient("https://fqlrrfxqiayfwtsoefbn.supabase.co","sb_publishable_S1b-id-lRHu5CKfXwjRniA_NfnzBrnc");
+const q=new Set();
 const T=["members","meetups","rsvps","dish_options","dinner_votes","orders","shopping","ideas","idea_votes","kashta_join","kashta_cars","kashta_gear","kashta_costs","qatta_paid","qatta_expenses"];
 const CATS=["ملازيم قهوة وشاي","منظفات","بهانيس","مياه","صيانة بسيطة","أخرى"];
 const REASONS=["سفر","عمل","ظرف عائلي","مرض","أخرى"];
@@ -125,12 +139,14 @@ else if(!ME)b=claimV();
 else b=`<main>${em()}${[home,dinner,kashta,qatta,ideas][tab]()}</main><nav>${["اللقاء","العشاء","الكشتات","القطة","اقتراحات"].map((t,i)=>`<button data-a="tab" data-v="${i}" class="${tab==i?"on":""}">${t}</button>`).join("")}</nav>`;
 $a.innerHTML=hdr()+b}
 
-async function load(){if(!U)return;
-const r=await Promise.all(T.map(t=>sb.from(t).select("*")));
-T.forEach((t,i)=>D[t]=r[i].data||[]);
+async function load(list){if(!U)return;
+if(!list)T.forEach(t=>D[t]=D[t]||[]);
+const L=list||T,r=await Promise.all(L.map(t=>sb.from(t).select("*")));
+L.forEach((t,i)=>{if(!r[i].error)D[t]=r[i].data||[]});
 const er=r.find(x=>x.error);if(er)msg=emsg(er.error.message);
-ME=D.members.find(m=>m.user_id==U.id)||null;ready=true;
-if(!rt)rt=sb.channel("dw").on("postgres_changes",{event:"*",schema:"public"},()=>{clearTimeout(tm);tm=setTimeout(load,400)}).subscribe();
+if(!list||L.includes("members"))ME=D.members.find(m=>m.user_id==U.id)||null;
+ready=true;
+if(!rt)rt=sb.channel("dw").on("postgres_changes",{event:"*",schema:"public"},p=>{if(T.includes(p.table))q.add(p.table);clearTimeout(tm);tm=setTimeout(()=>{const l=[...q];q.clear();if(l.length)load(l)},300)}).subscribe();
 R()}
 
 const tog=async(tb,match,row)=>{const{data,error}=await sb.from(tb).select("*").match(match);if(error)throw error;return data.length?w(sb.from(tb).delete().match(match)):w(sb.from(tb).insert(row))};
@@ -168,7 +184,8 @@ idea:()=>{const t=V("ii");return t?w(sb.from("ideas").insert({title:t,created_by
 vote:v=>tog("idea_votes",{idea_id:N(v),member_id:ME.id},{idea_id:N(v),member_id:ME.id}),
 ideadel:v=>w(sb.from("ideas").delete().eq("id",v))};
 
-async function run(a,v){if(!A[a])return;msg="";try{await A[a](v)}catch(e){msg=emsg(e.message||String(e))}U&&a!="out"?await load():R()}
+const AT={rsvp:["rsvps"],why:["rsvps"],mk:["meetups","kashta_gear"],tv:["dinner_votes"],ov:["dinner_votes"],oadd:["dish_options"],cook:["meetups"],shop:["shopping"],shopdel:["shopping"],ord:["orders"],orddel:["orders"],join:["kashta_join"],car:["kashta_cars"],gearadd:["kashta_gear"],gear:["kashta_gear"],kcadd:["kashta_costs"],kcdel:["kashta_costs"],paid:["qatta_paid"],exadd:["qatta_expenses"],exdel:["qatta_expenses"],idea:["ideas"],ideadel:["ideas","idea_votes"],vote:["idea_votes"]};
+async function run(a,v){if(!A[a])return;msg="";try{await A[a](v)}catch(e){msg=emsg(e.message||String(e))}U&&a!="out"?await load(AT[a]):R()}
 document.addEventListener("click",e=>{const t=e.target.closest("button[data-a]");if(!t)return;const a=t.dataset.a,v=t.dataset.v;
 if(a=="tab"){tab=N(v);R();return}if(a=="mode"){mode=v;msg="";R();return}run(a,v)});
 document.addEventListener("change",e=>{const t=e.target;if(t.tagName=="SELECT"&&t.dataset.a)run(t.dataset.a,t.value)});
