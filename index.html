@@ -149,7 +149,8 @@ ready=true;
 if(!rt)rt=sb.channel("dw").on("postgres_changes",{event:"*",schema:"public"},p=>{if(T.includes(p.table))q.add(p.table);clearTimeout(tm);tm=setTimeout(()=>{const l=[...q];q.clear();if(l.length)load(l)},300)}).subscribe();
 R()}
 
-const tog=async(tb,match,row)=>{const{data,error}=await sb.from(tb).select("*").match(match);if(error)throw error;return data.length?w(sb.from(tb).delete().match(match)):w(sb.from(tb).insert(row))};
+const tog=(tb,match,row,has)=>has?w(sb.from(tb).delete().match(match)):w(sb.from(tb).insert(row));
+const ins=async(t,row)=>{const{data,error}=await sb.from(t).insert(row).select();if(error)throw error;D[t]=D[t].concat(data||[])};
 const tvote=async(m,t,c)=>{const cur=D.dinner_votes.find(x=>x.meetup_id==m.id&&x.member_id==ME.id&&x.vote_type==t),k={meetup_id:m.id,member_id:ME.id,vote_type:t};
 return cur&&cur.choice==c?w(sb.from("dinner_votes").delete().match(k)):w(sb.from("dinner_votes").upsert({...k,choice:c}))};
 const A={
@@ -167,25 +168,48 @@ tv:v=>tvote(mt("regular"),"type",v),
 ov:v=>tvote(mt("regular"),"dish",String(v)),
 oadd:()=>{const t=V("oi2");return t?w(sb.from("dish_options").insert({kind:lead(mt("regular")),title:t,icon:"🍽️",created_by:ME.id})):0},
 cook:v=>w(sb.from("meetups").update({cook_member:v?N(v):null}).eq("id",mt("regular").id)),
-shop:()=>{const t=V("si");return t?w(sb.from("shopping").insert({meetup_id:mt("regular").id,item:t,added_by:ME.id})):0},
+shop:()=>{const t=V("si");return t?ins("shopping",{meetup_id:mt("regular").id,item:t,added_by:ME.id}):0},
 shopdel:v=>w(sb.from("shopping").delete().eq("id",v)),
-ord:()=>{const t=V("oi");return t?w(sb.from("orders").insert({meetup_id:mt("regular").id,member_id:ME.id,item:t,price:N(V("op"))})):0},
+ord:()=>{const t=V("oi");return t?ins("orders",{meetup_id:mt("regular").id,member_id:ME.id,item:t,price:N(V("op"))}):0},
 orddel:v=>w(sb.from("orders").delete().eq("id",v)),
-join:()=>{const m=mt("kashta");return tog("kashta_join",{meetup_id:m.id,member_id:ME.id},{meetup_id:m.id,member_id:ME.id})},
+join:()=>{const m=mt("kashta"),k={meetup_id:m.id,member_id:ME.id};return tog("kashta_join",k,k,D.kashta_join.some(j=>j.meetup_id==m.id&&j.member_id==ME.id))},
 car:v=>{const m=mt("kashta"),k={meetup_id:m.id,member_id:ME.id};return N(v)?w(sb.from("kashta_cars").upsert({...k,seats:N(v)})):w(sb.from("kashta_cars").delete().match(k))},
-gearadd:()=>{const t=V("gi");return t?w(sb.from("kashta_gear").insert({meetup_id:mt("kashta").id,item:t})):0},
+gearadd:()=>{const t=V("gi");return t?ins("kashta_gear",{meetup_id:mt("kashta").id,item:t}):0},
 gear:v=>{const g=D.kashta_gear.find(x=>x.id==v);return w(sb.from("kashta_gear").update({taken_by:g.taken_by?null:ME.id}).eq("id",v))},
-kcadd:()=>{const t=V("kt");return t?w(sb.from("kashta_costs").insert({meetup_id:mt("kashta").id,item:t,amount:N(V("kp")),added_by:ME.id})):0},
+kcadd:()=>{const t=V("kt");return t?ins("kashta_costs",{meetup_id:mt("kashta").id,item:t,amount:N(V("kp")),added_by:ME.id}):0},
 kcdel:v=>w(sb.from("kashta_costs").delete().eq("id",v)),
-paid:v=>tog("qatta_paid",{month:MO(),member_id:N(v)},{month:MO(),member_id:N(v),paid:true}),
-exadd:()=>N(V("ep"))>0?w(sb.from("qatta_expenses").insert({category:V("ec"),note:V("et")||null,amount:N(V("ep"))})):0,
+paid:v=>{const k={month:MO(),member_id:N(v)};return tog("qatta_paid",k,{...k,paid:true},D.qatta_paid.some(p=>p.month==k.month&&p.member_id==k.member_id&&p.paid))},
+exadd:()=>N(V("ep"))>0?ins("qatta_expenses",{category:V("ec"),note:V("et")||null,amount:N(V("ep"))}):0,
 exdel:v=>w(sb.from("qatta_expenses").delete().eq("id",v)),
-idea:()=>{const t=V("ii");return t?w(sb.from("ideas").insert({title:t,created_by:ME.id})):0},
-vote:v=>tog("idea_votes",{idea_id:N(v),member_id:ME.id},{idea_id:N(v),member_id:ME.id}),
+idea:()=>{const t=V("ii");return t?ins("ideas",{title:t,created_by:ME.id}):0},
+vote:v=>{const k={idea_id:N(v),member_id:ME.id};return tog("idea_votes",k,k,D.idea_votes.some(x=>x.idea_id==k.idea_id&&x.member_id==k.member_id))},
 ideadel:v=>w(sb.from("ideas").delete().eq("id",v))};
 
 const AT={rsvp:["rsvps"],why:["rsvps"],mk:["meetups","kashta_gear"],tv:["dinner_votes"],ov:["dinner_votes"],oadd:["dish_options"],cook:["meetups"],shop:["shopping"],shopdel:["shopping"],ord:["orders"],orddel:["orders"],join:["kashta_join"],car:["kashta_cars"],gearadd:["kashta_gear"],gear:["kashta_gear"],kcadd:["kashta_costs"],kcdel:["kashta_costs"],paid:["qatta_paid"],exadd:["qatta_expenses"],exdel:["qatta_expenses"],idea:["ideas"],ideadel:["ideas","idea_votes"],vote:["idea_votes"]};
-async function run(a,v){if(!A[a])return;msg="";try{await A[a](v)}catch(e){msg=emsg(e.message||String(e))}U&&a!="out"?await load(AT[a]):R()}
+const lv=(m,t,c)=>{const cur=D.dinner_votes.find(x=>x.meetup_id==m.id&&x.member_id==ME.id&&x.vote_type==t);D.dinner_votes=D.dinner_votes.filter(x=>x!==cur);if(!(cur&&cur.choice==c))D.dinner_votes.push({meetup_id:m.id,member_id:ME.id,vote_type:t,choice:c})};
+const OP={
+rsvp:v=>{const m=mt("regular");D.rsvps=D.rsvps.filter(r=>!(r.meetup_id==m.id&&r.member_id==ME.id));if(v)D.rsvps.push({meetup_id:m.id,member_id:ME.id,status:v,reason:null})},
+why:v=>{const m=mt("regular"),r=D.rsvps.find(r=>r.meetup_id==m.id&&r.member_id==ME.id);if(r)r.reason=v},
+tv:v=>lv(mt("regular"),"type",v),
+ov:v=>lv(mt("regular"),"dish",String(v)),
+join:()=>{const m=mt("kashta"),f=j=>j.meetup_id==m.id&&j.member_id==ME.id;D.kashta_join=D.kashta_join.some(f)?D.kashta_join.filter(j=>!f(j)):[...D.kashta_join,{meetup_id:m.id,member_id:ME.id}]},
+car:v=>{const m=mt("kashta");D.kashta_cars=D.kashta_cars.filter(c=>!(c.meetup_id==m.id&&c.member_id==ME.id));if(N(v))D.kashta_cars.push({meetup_id:m.id,member_id:ME.id,seats:N(v)})},
+gear:v=>{const g=D.kashta_gear.find(x=>x.id==v);if(g)g.taken_by=g.taken_by?null:ME.id},
+paid:v=>{const mo=MO(),id=N(v),f=p=>p.month==mo&&p.member_id==id;D.qatta_paid=D.qatta_paid.some(p=>f(p)&&p.paid)?D.qatta_paid.filter(p=>!f(p)):[...D.qatta_paid,{month:mo,member_id:id,paid:true}]},
+vote:v=>{const id=N(v),f=x=>x.idea_id==id&&x.member_id==ME.id;D.idea_votes=D.idea_votes.some(f)?D.idea_votes.filter(x=>!f(x)):[...D.idea_votes,{idea_id:id,member_id:ME.id}]},
+orddel:v=>{D.orders=D.orders.filter(o=>o.id!=v)},
+shopdel:v=>{D.shopping=D.shopping.filter(o=>o.id!=v)},
+kcdel:v=>{D.kashta_costs=D.kashta_costs.filter(o=>o.id!=v)},
+exdel:v=>{D.qatta_expenses=D.qatta_expenses.filter(o=>o.id!=v)},
+ideadel:v=>{D.ideas=D.ideas.filter(o=>o.id!=v);D.idea_votes=D.idea_votes.filter(x=>x.idea_id!=v)}};
+const LOCAL=new Set(["ord","shop","kcadd","exadd","idea","gearadd"]);
+async function run(a,v){if(!A[a])return;msg="";
+let p;try{p=Promise.resolve(A[a](v))}catch(e){p=Promise.reject(e)}
+const o=OP[a];if(o){try{o(v)}catch(e){}R()}
+try{await p}catch(e){msg=emsg(e.message||String(e));U&&a!="out"?await load(AT[a]):R();return}
+if(o)return;
+if(LOCAL.has(a)){R();return}
+U&&a!="out"?await load(AT[a]):R()}
 document.addEventListener("click",e=>{const t=e.target.closest("button[data-a]");if(!t)return;const a=t.dataset.a,v=t.dataset.v;
 if(a=="tab"){tab=N(v);R();return}if(a=="mode"){mode=v;msg="";R();return}run(a,v)});
 document.addEventListener("change",e=>{const t=e.target;if(t.tagName=="SELECT"&&t.dataset.a)run(t.dataset.a,t.value)});
